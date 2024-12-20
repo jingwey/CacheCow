@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"fmt"
 	"io"
 	"strconv"
 )
@@ -61,4 +62,68 @@ func (r *Resp) readInteger() (x int, n int, err error) {
 	}
 
 	return int(i64), n, nil
+}
+
+func (r *Resp) Read() (Value, error) {
+	valType, err := r.reader.ReadByte()
+	if err != nil {
+		return Value{}, err
+	}
+
+	switch valType {
+	case ARRAY:
+		return r.readArray()
+	case BULK:
+		return r.readBulk()
+	default:
+		fmt.Printf("Unknown type: %v", string(valType))
+		return Value{}, nil
+	}
+
+}
+
+func (r *Resp) readArray() (Value, error) {
+	v := Value{}
+	v.typ = "array"
+
+	// read length of array
+	length, _ , err := r.readInteger()
+	if err != nil {
+		return v, err
+	}
+
+	// for each line, parse and read the value
+	v.array = make([]Value, length)
+	for i := 0; i < length; i++ {
+		val, err := r.Read()
+		if err != nil {
+			return v, err
+		}
+
+		v.array[i] = val
+	}
+
+	return v, nil
+}
+
+func (r *Resp) readBulk() (Value, error) {
+	v := Value{}
+
+	v.typ = "bulk"
+
+	len, _, err := r.readInteger()
+	if err != nil {
+		return v, err
+	}
+
+	bulk := make([]byte, len)
+
+	r.reader.Read(bulk)
+
+	v.bulk = string(bulk)
+	
+	// read the trailing CRLF
+	r.readLine()
+
+	return v, nil
 }
