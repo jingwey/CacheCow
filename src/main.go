@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"net"
+	"strings"
 )
 
 func main() {
@@ -31,9 +32,35 @@ func main() {
 			return
 		}
 
+		if value.typ != "array" {
+			fmt.Println("Invalid request, expected array")
+			continue
+		}
+
+		if len(value.array) == 0 {
+			fmt.Println("Invalid request, expected array length > 0")
+			continue
+		}
+
+		// extract the command first
+		command := strings.ToUpper(value.array[0].bulk)
+		// then take the rest of the values
+		args := value.array[1:]
+
 		fmt.Println(value)
 
-		conn.Write([]byte("+OK\r\n"))
+		writer := NewWriter(conn)
+
+		// pick command from map
+		handler, ok := Handlers[command]
+		if !ok {
+			fmt.Println("Invalid command: ", command)
+			writer.Write(Value{typ: "string", str: "INVALID COMMAND"})
+			continue
+		}
+
+		result := handler(args)
+		writer.Write(result)
 
 	}
 
