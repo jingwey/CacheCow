@@ -38,6 +38,8 @@ func (r *Resp) readLine() (line []byte, n int, err error) {
 			return nil, 0, err
 		}
 
+		fmt.Println(string(b))
+
 		n += 1
 
 		line = append(line, b)
@@ -72,6 +74,8 @@ func (r *Resp) Read() (Value, error) {
 		return r.readArray()
 	case BULK:
 		return r.readBulk()
+	// case INTEGER:
+	// 	return r.readInteger()
 	default:
 		fmt.Printf("Unknown type: %v", string(valType))
 		return Value{}, nil
