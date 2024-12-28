@@ -15,14 +15,15 @@ func main() {
 
 	fmt.Println("starting CacheCow at :6379...")
 
-	aof, err := NewAof("database.aof")
+	aof, err := GetAof()
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
 
-	defer aof.Close()
+	defer CloseAOF()
 
+	// to load from the existing file
 	aof.Read(func (value Value)  {
 		command := strings.ToUpper(value.array[0].bulk)
 		args := value.array[1:]
@@ -36,13 +37,22 @@ func main() {
 		handler(args)
 	})
 
-	conn, err := l.Accept()
-	if err != nil {
-		fmt.Println(err)
-		return
+	for {
+		conn, err := l.Accept()
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+
+		go handleConnection(conn)
+	
 	}
 
-	defer conn.Close() // close connection once finished
+	
+}
+
+func handleConnection(conn net.Conn) {
+	defer conn.Close() // close connection once finished	
 
 	for {
 
@@ -81,6 +91,11 @@ func main() {
 		}
 
 		if command == "SET" || command == "HSET" {
+			aof, err := GetAof()
+			if err != nil {
+				fmt.Printf("get aof err: %v\n", err)
+				continue
+			}
 			aof.Write(value)
 		}
 
@@ -88,5 +103,6 @@ func main() {
 		writer.Write(result)
 
 	}
+
 
 }
