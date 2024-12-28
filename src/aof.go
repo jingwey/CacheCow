@@ -21,9 +21,8 @@ var (
 
 	// reason for 2 locks
 	// obj lock is for accessing and closing the AOF singleton
-	// RW lock is for controlling the I/O of the AOF singleton
+	// RW lock (inside the instance) is for controlling the I/O of the AOF singleton
 	aofObjLock sync.Mutex
-	// aofRWLock  sync.Mutex
 )
 
 var filePath = "database.aof"

@@ -15,11 +15,6 @@ const (
 	ARRAY  = '*'
 )
 
-const (
-	
-)
-
-
 // RESP - Redis Serialization Protocol Specification
 // https://redis.io/docs/latest/develop/reference/protocol-spec/
 type Resp struct {
@@ -30,7 +25,6 @@ func NewResp(rd io.Reader) *Resp {
 	return &Resp{reader: bufio.NewReader(rd)}
 }
 
-// input := "$5\r\nAhmed\r\n"
 func (r *Resp) readLine() (line []byte, n int, err error) {
 	for {
 		b, err := r.reader.ReadByte()
